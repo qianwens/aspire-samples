@@ -1,8 +1,10 @@
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.ServiceDiscovery.Abstractions;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
@@ -17,7 +19,19 @@ public static class Extensions
 
         builder.AddDefaultHealthChecks();
 
+        // load service configurations from azure app config 
+        //var connectionString = builder.Configuration.GetConnectionString("AppConfig");
+        //if (connectionString != null)
+        //{
+        //    builder.Configuration.AddAzureAppConfiguration(connectionString);
+        //}
+
+        // Option 1: load service configurations from service discovery
+        builder.Configuration.AddServiceDiscoveryConfiguration();
         builder.Services.AddServiceDiscovery();
+        // Option 2: discover service endpoints from service discovery dynamically 
+        builder.Services.AddSingleton<IServiceEndPointResolverProvider,
+            ServiceDiscoveryEndPointResolverProvider>();
 
         builder.Services.ConfigureHttpClientDefaults(http =>
         {

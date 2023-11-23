@@ -1,11 +1,62 @@
 ﻿using Grpc.Health.V1;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using ServiceDiscovery;
 
 namespace System.Net.Http;
 
 public static class ServiceReferenceExtensions
 {
+    public static IConfigurationManager AddServiceDiscoveryConfiguration(this IConfigurationManager configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+        var url = Environment.GetEnvironmentVariable("ServiceDiscovery");
+        var nameSpace = Environment.GetEnvironmentVariable("Namespace");
+        if (url == null || nameSpace == null)
+        {
+            return configuration;
+        }
+        ServiceDiscoveryClient _client = new(url);
+        var dsServices = _client.GetServices(nameSpace).Result;
+        if (dsServices != null && dsServices.Count() > 0)
+        {
+            foreach (var service in dsServices)
+            {
+                if (string.Equals(service.Protocol, "db", StringComparison.OrdinalIgnoreCase))
+                {
+                    string serviceName = service.Id!.Split('/').Last();
+                    var instances = _client.GetServiceInstances(nameSpace, serviceName).Result;
+                    if (instances != null)
+                    {
+                        foreach (var instance in instances)
+                        {
+                            if (instance.Metadatas != null && instance.Metadatas.ContainsKey("ConnectionString"))
+                            {
+                                string key = $"ConnectionStrings:{serviceName}";
+                                configuration[key] = instance.Metadatas["ConnectionString"];
+                            }
+                        }
+                    }
+                }
+                else if (string.Equals(service.Protocol, "http", StringComparison.OrdinalIgnoreCase))
+                {
+                    string serviceName = service.Id!.Split('/').Last();
+                    var instances = _client.GetServiceInstances(nameSpace, serviceName).Result;
+                    if (instances != null)
+                    {
+                        foreach (var instance in instances)
+                        {
+                            string key = $"Services:{serviceName}";
+                            configuration[key] = $"https://{instance.Address}";
+                        }
+                    }
+                }
+            }
+        }
+        return configuration;
+    }
+
     /// <summary>
     /// Adds an HTTP service reference. Configures a binding between the <typeparamref name="TClient"/> type and a named <see cref="HttpClient"/>
     /// with a base address. The client name will be set to the type name of <typeparamref name="TClient"/>.
