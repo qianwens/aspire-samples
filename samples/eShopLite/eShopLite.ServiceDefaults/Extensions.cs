@@ -30,8 +30,8 @@ public static class Extensions
         builder.Configuration.AddServiceDiscoveryConfiguration();
         builder.Services.AddServiceDiscovery();
         // Option 2: discover service endpoints from service discovery dynamically 
-        builder.Services.AddSingleton<IServiceEndPointResolverProvider,
-            ServiceDiscoveryEndPointResolverProvider>();
+        //builder.Services.AddSingleton<IServiceEndPointResolverProvider,
+        //    ServiceDiscoveryEndPointResolverProvider>();
 
         builder.Services.ConfigureHttpClientDefaults(http =>
         {
