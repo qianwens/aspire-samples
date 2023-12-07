@@ -63,5 +63,6 @@
     <PackageVersion Include="Dapr.AspNetCore" Version="1.12.0" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.5.0" />
     <PackageVersion Include="Yarp.ReverseProxy" Version="2.1.0-preview.1.23556.5" />
+    <PackageVersion Include="Microsoft.Azure.AppConfiguration.AspNetCore" Version="7.0.0" />
   </ItemGroup>
 </Project>
